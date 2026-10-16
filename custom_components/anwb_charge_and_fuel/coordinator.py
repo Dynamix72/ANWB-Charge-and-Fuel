@@ -1,24 +1,135 @@
 """
-Coordinator skeleton for ANWB Charge & Fuel.
+Coordinator that fetches ANWB chargers and fuel stations and exposes them to sensors.
 """
 
 import logging
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from datetime import timedelta
+from typing import Any, Dict
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .api import AnwbClient, AnwbApiError
+from .const import DEFAULT_DATA_MODE
 
 _LOGGER = logging.getLogger(__name__)
 
 
+def _haversine_km(lat1, lon1, lat2, lon2):
+    # Calculate the great circle distance between two points on the earth (km)
+    from math import radians, sin, cos, asin, sqrt
+
+    lat1, lon1, lat2, lon2 = map(radians, (lat1, lon1, lat2, lon2))
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    return 6371.0 * c
+
+
 class RouteCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, entry, update_interval: int = 300):
+    def __init__(self, hass: HomeAssistant, entry, update_interval: int = 300):
+        self.hass = hass
+        self.entry = entry
+        self._device_tracker = entry.data.get("device_tracker")
+        self._radius = entry.options.get("radius") or entry.data.get("radius") or 10
+        self._ors_key = entry.options.get("ors_api_key") or entry.data.get("ors_api_key") or None
+        self._client = AnwbClient(hass)
+
         super().__init__(
             hass,
             _LOGGER,
             name="ANWB Charge & Fuel",
             update_interval=timedelta(seconds=update_interval),
         )
-        self.entry = entry
 
-    async def _async_update_data(self):
-        # Implement fetching logic here
-        return {}
+    async def _async_update_data(self) -> Dict[str, Any]:
+        # Determine current location from the configured device_tracker entity
+        tracker_state = self.hass.states.get(self._device_tracker)
+        if not tracker_state:
+            raise UpdateFailed(f"Device tracker {self._device_tracker} not found")
+
+        lat = tracker_state.attributes.get("latitude")
+        lon = tracker_state.attributes.get("longitude")
+        if lat is None or lon is None:
+            raise UpdateFailed("Device tracker does not expose latitude/longitude attributes")
+
+        data_mode = self.entry.options.get("data_mode") or self.entry.data.get("data_mode") or DEFAULT_DATA_MODE
+
+        result: Dict[str, Any] = {"chargers": [], "fuel_stations": [], "vehicle": {"latitude": lat, "longitude": lon}, "data_mode": data_mode}
+
+        try:
+            if data_mode in ("chargers", "both"):
+                raw = await self._client.get_chargers(lat, lon, self._radius)
+                items = raw.get("value", []) if isinstance(raw, dict) else []
+                for item in items:
+                    coords = item.get("coordinates") or {}
+                    plat = coords.get("latitude")
+                    plon = coords.get("longitude")
+                    if plat is None or plon is None:
+                        continue
+                    distance_km = _haversine_km(lat, lon, plat, plon)
+                    # Extract power and price if present
+                    power = 0
+                    evses = item.get("electricVehicleSupplyEquipment", []) or []
+                    for ev in evses:
+                        for conn in ev.get("connectors", []) or []:
+                            try:
+                                mp = float(conn.get("maxPowerInKW", 0) or 0)
+                                if mp > power:
+                                    power = mp
+                            except Exception:
+                                pass
+                    price = None
+                    price_field = item.get("price") or {}
+                    if isinstance(price_field, dict):
+                        try:
+                            price = float(price_field.get("price"))
+                        except Exception:
+                            price = None
+
+                    result["chargers"].append({"charger": item, "distance_km": round(distance_km, 2), "max_power_kw": power, "price": price})
+
+            if data_mode in ("fuels", "both"):
+                raw = await self._client.get_fuel_stations(lat, lon, self._radius)
+                items = raw.get("value", []) if isinstance(raw, dict) else []
+                for item in items:
+                    coords = item.get("coordinates") or {}
+                    plat = coords.get("latitude")
+                    plon = coords.get("longitude")
+                    if plat is None or plon is None:
+                        continue
+                    distance_km = _haversine_km(lat, lon, plat, plon)
+                    price = None
+                    # Attempt to find price in a few common fields
+                    for field in ("price", "fuelPrices", "prices"):
+                        v = item.get(field)
+                        if isinstance(v, dict) and v.get("price") is not None:
+                            try:
+                                price = float(v.get("price"))
+                                break
+                            except Exception:
+                                continue
+                        if isinstance(v, list):
+                            for el in v:
+                                if isinstance(el, dict) and el.get("price") is not None:
+                                    try:
+                                        price = float(el.get("price"))
+                                        break
+                                    except Exception:
+                                        continue
+                            if price is not None:
+                                break
+
+                    result["fuel_stations"].append({"station": item, "distance_km": round(distance_km, 2), "price": price})
+
+        except AnwbApiError as err:
+            raise UpdateFailed(f"ANWB API error: {err}") from err
+        except Exception as err:
+            raise UpdateFailed(f"Unexpected error fetching ANWB data: {err}") from err
+
+        # Sort results for convenience
+        result["chargers"].sort(key=lambda x: (x["price"] if x.get("price") is not None else float("inf"), x["distance_km"]))
+        result["fuel_stations"].sort(key=lambda x: (x["price"] if x.get("price") is not None else float("inf"), x["distance_km"]))
+
+        return result

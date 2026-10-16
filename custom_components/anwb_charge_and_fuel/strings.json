@@ -1,0 +1,11 @@
+{
+  "anwb_charge_and_fuel": {
+    "title": "ANWB Charge & Fuel",
+    "description": "Find ANWB charging locations and fuel prices",
+    "step": {
+      "user": {
+        "title": "Configure ANWB Charge & Fuel"
+      }
+    }
+  }
+}
