@@ -1,0 +1,14 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      # ANWB Charge & Fuel
+      Gebruik de knop om sensoren te verversen.
+  - type: button
+    name: Update ANWB data
+    tap_action:
+      action: call-service
+      service: homeassistant.update_entity
+      service_data:
+        entity_id:
+          - sensor.anwb_example
