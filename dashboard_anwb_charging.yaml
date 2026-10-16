@@ -1,0 +1,25 @@
+# UI Dashboard for ANWB Charging & Fuel
+
+This dashboard example provides a compact interface to view and refresh ANWB sensors.
+
+Below is a Lovelace YAML snippet you can paste into a dashboard or use as `dashboard_anwb_charging.yaml` in the repo.
+
+```yaml
+# Paste into a Lovelace raw config or include as a view
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      # ANWB Charge & Fuel
+      Use the button below to refresh ANWB sensors.
+
+  - type: button
+    name: Update ANWB data
+    tap_action:
+      action: call-service
+      service: homeassistant.update_entity
+      service_data:
+        entity_id:
+          - sensor.anwb_cheapest_charger
+          - sensor.anwb_cheapest_fuel
+```
