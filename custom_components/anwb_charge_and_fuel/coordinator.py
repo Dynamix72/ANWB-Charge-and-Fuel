@@ -27,6 +27,47 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     return 6371.0 * c
 
 
+def _parse_numeric_price(value):
+    """Normalize various ANWB price formats into a float."""
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    if isinstance(value, str):
+        s = value.strip().replace(" ", "")
+        if not s:
+            return None
+
+        # Handle values like "1,99" or "1.234,56" or "1.99"
+        if "," in s and "." in s:
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            s = s.replace(",", ".")
+
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    if isinstance(value, dict):
+        for key in ("price", "value"):
+            parsed = _parse_numeric_price(value.get(key))
+            if parsed is not None:
+                return parsed
+        return None
+
+    if isinstance(value, list):
+        for item in value:
+            parsed = _parse_numeric_price(item)
+            if parsed is not None:
+                return parsed
+        return None
+
+    return None
+
+
 class RouteCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, entry, update_interval: int = 300):
         self.hass = hass
@@ -100,24 +141,15 @@ class RouteCoordinator(DataUpdateCoordinator):
                     if plat is None or plon is None:
                         continue
                     distance_km = _haversine_km(lat, lon, plat, plon)
-                    price = None
-                    # Attempt to find price in a few common fields
-                    for field in ("price", "fuelPrices", "prices"):
-                        v = item.get(field)
-                        if isinstance(v, dict) and v.get("price") is not None:
-                            try:
-                                price = float(v.get("price"))
-                                break
-                            except Exception:
-                                continue
-                        if isinstance(v, list):
-                            for el in v:
-                                if isinstance(el, dict) and el.get("price") is not None:
-                                    try:
-                                        price = float(el.get("price"))
-                                        break
-                                    except Exception:
-                                        continue
+
+                    # First: direct raw value, e.g. item["value"] = 1.899
+                    price = _parse_numeric_price(item.get("value"))
+
+                    # Fallback: common nested price structures
+                    if price is None:
+                        for field in ("price", "fuelPrices", "prices"):
+                            v = item.get(field)
+                            price = _parse_numeric_price(v)
                             if price is not None:
                                 break
 
