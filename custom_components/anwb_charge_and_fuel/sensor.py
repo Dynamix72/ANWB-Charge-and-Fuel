@@ -14,14 +14,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    coordinator: RouteCoordinator = hass.data["anwb_charge_and_fuel"][entry.entry_id]["coordinator"] if hass.data.get("anwb_charge_and_fuel") and hass.data["anwb_charge_and_fuel"].get(entry.entry_id) else None
+    entry_data = hass.data.setdefault("anwb_charge_and_fuel", {}).setdefault(entry.entry_id, {})
+    coordinator: RouteCoordinator | None = entry_data.get("coordinator")
 
-    if not coordinator:
-        # Create coordinator and store it
+    if coordinator is None:
+        # Create coordinator and store it without overwriting other entry data.
         coordinator = RouteCoordinator(hass, entry)
         await coordinator.async_config_entry_first_refresh()
-        hass.data.setdefault("anwb_charge_and_fuel", {})
-        hass.data["anwb_charge_and_fuel"][entry.entry_id] = {"coordinator": coordinator}
+        entry_data["coordinator"] = coordinator
 
     entities: List[SensorEntity] = [
         CheapestChargerSensor(coordinator, entry.entry_id),
