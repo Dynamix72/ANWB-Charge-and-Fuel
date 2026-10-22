@@ -6,6 +6,7 @@ from typing import List
 import logging
 
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .coordinator import RouteCoordinator
@@ -18,10 +19,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     coordinator: RouteCoordinator | None = entry_data.get("coordinator")
 
     if coordinator is None:
-        # Create coordinator and store it without overwriting other entry data.
-        coordinator = RouteCoordinator(hass, entry)
-        await coordinator.async_config_entry_first_refresh()
-        entry_data["coordinator"] = coordinator
+        raise ConfigEntryNotReady("Coordinator not initialized")
 
     entities: List[SensorEntity] = [
         CheapestChargerSensor(coordinator, entry.entry_id),
