@@ -28,8 +28,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
         FuelCountSensor(coordinator, entry.entry_id),
     ]
 
-    # Top N sensors (1..5 for brevity)
-    for i in range(1, 6):
+    # Keep top-N entities consistent with legacy entity IDs used by users.
+    # Older installs may still have sensor.anwb_top_fuel_6..10 in the registry.
+    for i in range(1, 11):
         entities.append(TopChargerSensor(coordinator, entry.entry_id, i))
         entities.append(TopFuelSensor(coordinator, entry.entry_id, i))
 
