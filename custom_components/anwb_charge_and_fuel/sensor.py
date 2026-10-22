@@ -67,6 +67,8 @@ class CheapestChargerSensor(AnwbBaseSensor):
         cheapest = chargers[0]
         charger = cheapest.get("charger")
         return {
+            "rank": 1,
+            "price": cheapest.get("price"),
             "distance_km": cheapest.get("distance_km"),
             "max_power_kw": cheapest.get("max_power_kw"),
             "raw": charger,
@@ -102,7 +104,13 @@ class TopChargerSensor(AnwbBaseSensor):
         if len(chargers) < self.rank:
             return {}
         item = chargers[self.rank - 1]
-        return {"distance_km": item.get("distance_km"), "max_power_kw": item.get("max_power_kw"), "raw": item.get("charger")}
+        return {
+            "rank": self.rank,
+            "price": item.get("price"),
+            "distance_km": item.get("distance_km"),
+            "max_power_kw": item.get("max_power_kw"),
+            "raw": item.get("charger"),
+        }
 
 
 class CheapestFuelSensor(AnwbBaseSensor):
@@ -122,7 +130,12 @@ class CheapestFuelSensor(AnwbBaseSensor):
         if not fuels:
             return {}
         station = fuels[0].get("station")
-        return {"distance_km": fuels[0].get("distance_km"), "raw": station}
+        return {
+            "rank": 1,
+            "price": fuels[0].get("price"),
+            "distance_km": fuels[0].get("distance_km"),
+            "raw": station,
+        }
 
 
 class FuelCountSensor(AnwbBaseSensor):
@@ -153,4 +166,9 @@ class TopFuelSensor(AnwbBaseSensor):
         if len(fuels) < self.rank:
             return {}
         item = fuels[self.rank - 1]
-        return {"distance_km": item.get("distance_km"), "raw": item.get("station")}
+        return {
+            "rank": self.rank,
+            "price": item.get("price"),
+            "distance_km": item.get("distance_km"),
+            "raw": item.get("station"),
+        }
