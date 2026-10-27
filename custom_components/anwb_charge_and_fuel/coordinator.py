@@ -15,7 +15,13 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api import AnwbClient, AnwbApiError
-from .const import DEFAULT_DATA_MODE
+from .const import (
+    DEFAULT_SEARCH_TYPE,
+    DEFAULT_FUEL_TYPE,
+    DEFAULT_CHARGER_TYPE,
+    DEFAULT_LOCATION_SOURCE,
+)
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -171,25 +177,12 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "Device tracker does not expose latitude/longitude"
             )
 
-        #
-        # backwards compatibility
-        #
-
-        legacy_mode = (
-            self.entry.options.get("data_mode")
-            or self.entry.data.get("data_mode")
-            or DEFAULT_DATA_MODE
-        )
-
-        if hasattr(self, "search_type"):
-            if self.search_type == "charger":
-                data_mode = "chargers"
-            elif self.search_type == "fuel":
-                data_mode = "fuels"
-            else:
-                data_mode = legacy_mode
+        if self.search_type == "charger":
+            data_mode = "chargers"
+        elif self.search_type == "fuel":
+            data_mode = "fuels"
         else:
-            data_mode = legacy_mode
+            data_mode = "fuels"
 
         result: Dict[str, Any] = {
             "chargers": [],
