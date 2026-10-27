@@ -45,6 +45,7 @@ class ANWBRadiusNumber(
 
     _attr_name = "Zoekafstand"
     _attr_icon = "mdi:map-marker-radius"
+
     _attr_entity_category = EntityCategory.CONFIG
 
     _attr_native_min_value = MIN_RADIUS
@@ -83,9 +84,9 @@ class ANWBRadiusNumber(
 
         return DeviceInfo(
             identifiers={
-                (DOMAIN, "charge")
+                (DOMAIN, "settings")
             },
-            name="ANWB Charge",
+            name="ANWB Settings",
             manufacturer="ANWB",
         )
 
