@@ -175,35 +175,34 @@ class AnwbClient:
                     f"Network error: {err}"
                 ) from err
 
-    async def _ors_get(
+ 
+     async def _ors_get(
         self,
         url: str,
         api_key: str,
         params: dict,
     ) -> dict:
-        """Execute ORS GET request."""
     
         timeout = aiohttp.ClientTimeout(
             total=self._timeout
         )
     
-        headers = {
-            "Authorization": api_key,
-        }
+        headers = {}
     
         async with self._session.get(
             url,
             headers=headers,
             params=params,
             timeout=timeout,
-        ) as resp:
+        ) as resp:   
+    
             
-             if resp.status != 200:
-                text = await resp.text()
+            if resp.status != 200:
+               text = await resp.text()
             
-                raise AnwbApiError(
-                    f"ORS error {resp.status}: {text}"
-                )   
+               raise AnwbApiError(
+                   f"ORS error {resp.status}: {text}"
+               )   
                
     
             return await resp.json()
@@ -221,6 +220,7 @@ class AnwbClient:
             {
                 "text": destination,
                 "size": 1,
+                "api_key": api_key,
             },
         )
     
