@@ -16,10 +16,11 @@ from homeassistant.helpers.update_coordinator import (
 
 from .api import AnwbClient, AnwbApiError
 from .const import (
-    DEFAULT_SEARCH_TYPE,
     DEFAULT_FUEL_TYPE,
     DEFAULT_CHARGER_TYPE,
     DEFAULT_LOCATION_SOURCE,
+    CONF_DATA_MODE,
+    DEFAULT_DATA_MODE,
 )
 
 
