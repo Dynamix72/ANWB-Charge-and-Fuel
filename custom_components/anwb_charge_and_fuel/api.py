@@ -188,6 +188,8 @@ class AnwbClient:
         )
     
         headers = {}
+
+        params["api_key"] = api_key
     
         async with self._session.get(
             url,
@@ -307,10 +309,9 @@ class AnwbClient:
             total=self._timeout
         )
     
-        headers = {
-            "Authorization": api_key,
-            "Content-Type": "application/json",
-        }
+        headers = {}
+        
+        params["api_key"] = api_key
     
         payload = {
             "coordinates": [
@@ -327,8 +328,11 @@ class AnwbClient:
         ) as resp:
     
             if resp.status != 200:
+            
+                text = await resp.text()
+            
                 raise AnwbApiError(
-                    f"ORS route error {resp.status}"
+                    f"ORS route error {resp.status}: {text}"
                 )
     
             result = await resp.json()
