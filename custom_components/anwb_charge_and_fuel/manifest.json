@@ -1,8 +1,11 @@
 {
   "domain": "anwb_charge_and_fuel",
   "name": "ANWB Charge & Fuel",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "config_flow": true,
   "iot_class": "cloud_polling",
-  "requirements": []
+  "requirements": [],
+  "codeowners": [
+    "@richardbrinkman"
+  ]
 }
