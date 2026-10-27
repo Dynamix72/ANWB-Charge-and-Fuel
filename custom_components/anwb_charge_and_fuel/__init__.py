@@ -19,6 +19,7 @@ PLATFORMS = [
     "select",
     "number",
     "button",
+    "text",
 ]
 
 _LOGGER = logging.getLogger(__name__)
