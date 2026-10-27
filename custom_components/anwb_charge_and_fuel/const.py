@@ -47,6 +47,7 @@ DATA_MODES = [
 FUEL_TYPES = [
     "euro95",
     "diesel",
+    "superplus",
     "lpg",
 ]
 
