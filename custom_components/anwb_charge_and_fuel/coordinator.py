@@ -126,8 +126,11 @@ class RouteCoordinator(DataUpdateCoordinator):
         #
         # Native entity settings
         #
-
-        self.search_type = "fuel"
+        self.data_mode = (
+            entry.options.get(CONF_DATA_MODE)
+            or entry.data.get(CONF_DATA_MODE)
+            or DEFAULT_DATA_MODE
+        )
         self.fuel_type = "euro95"
         self.charger_type = "all"
         self.location_source = "current_location"
@@ -178,12 +181,7 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "Device tracker does not expose latitude/longitude"
             )
 
-        if self.search_type == "charger":
-            data_mode = "chargers"
-        elif self.search_type == "fuel":
-            data_mode = "fuels"
-        else:
-            data_mode = "fuels"
+        data_mode = self.data_mode
 
         result: Dict[str, Any] = {
             "chargers": [],
@@ -201,7 +199,7 @@ class RouteCoordinator(DataUpdateCoordinator):
             #
 
             if data_mode in (
-                "chargers",
+                "charge",
                 "both",
             ):
                 raw = await self._client.get_chargers(
@@ -338,7 +336,7 @@ class RouteCoordinator(DataUpdateCoordinator):
             #
 
             if data_mode in (
-                "fuels",
+                "fuel",
                 "both",
             ):
                 raw = await self._client.get_fuel_stations(
