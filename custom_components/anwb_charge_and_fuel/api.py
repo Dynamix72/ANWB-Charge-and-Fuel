@@ -33,11 +33,11 @@ ANWB_BASE = (
 )
 
 ORS_GEOCODE_URL = (
-    "https://api.openrouteservice.org/geocode/search"
+    "https://api.heigit.org/pelias/v1/search"
 )
 
 ORS_ROUTE_URL = (
-    "https://api.openrouteservice.org/v2/directions/driving-car/geojson"
+    "https://api.heigit.org/openrouteservice/v2/directions/driving-car/geojson"
 )
 
 class AnwbApiError(Exception):
