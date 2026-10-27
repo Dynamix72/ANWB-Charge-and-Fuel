@@ -423,7 +423,13 @@ class RouteCoordinator(DataUpdateCoordinator):
             or entry.data.get("radius")
             or 10
         )
-
+        
+        #
+        # Route informatie
+        #
+        
+        self.route_distance_km = 10
+        
         super().__init__(
             hass,
             _LOGGER,
