@@ -73,15 +73,9 @@ class ConfigFlow(
             ),
         )
 
-    @staticmethod
-    def async_get_options_flow(
-        config_entry,
-    ):
-        """Get options flow."""
-
-        return OptionsFlowHandler(
-            config_entry
-        )
+@staticmethod
+def async_get_options_flow(config_entry):
+    return OptionsFlowHandler(config_entry)
 
 
 class OptionsFlowHandler(
@@ -89,6 +83,9 @@ class OptionsFlowHandler(
 ):
     """Handle options."""
 
+    def __init__(self, config_entry):
+        self._config_entry = config_entry
+        
     async def async_step_init(
         self,
         user_input=None,
@@ -97,7 +94,7 @@ class OptionsFlowHandler(
 
         if user_input is not None:
             self.hass.config_entries.async_update_entry(
-                self.config_entry,
+                self._config_entry,
                 options={
                     CONF_ORS_API_KEY:
                         user_input.get(
@@ -113,10 +110,10 @@ class OptionsFlowHandler(
             )
 
         current_ors_key = (
-            self.config_entry.options.get(
+            self._config_entry.options.get(
                 CONF_ORS_API_KEY
             )
-            or self.config_entry.data.get(
+            or self._config_entry.data.get(
                 CONF_ORS_API_KEY
             )
             or ""
