@@ -470,7 +470,21 @@ class RouteCoordinator(DataUpdateCoordinator):
         if destination and self._ors_key:
         
             try:
-        
+                _LOGGER.warning(
+                    "ORS KEY PRESENT=%s",
+                    bool(self._ors_key),
+                )
+                
+                _LOGGER.warning(
+                    "ORS KEY LENGTH=%s",
+                    len(self._ors_key or "")
+                )
+                
+                if self._ors_key:
+                    _LOGGER.warning(
+                        "ORS KEY START=%s...",
+                        self._ors_key[:8],
+                    )
                 destination_data = (
                     await self._client.geocode_destination(
                         self._ors_key,
