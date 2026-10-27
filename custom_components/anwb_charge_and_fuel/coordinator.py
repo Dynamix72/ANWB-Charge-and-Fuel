@@ -65,27 +65,42 @@ def _normalize_fuel_type(value):
                 return normalized
         return None
 
-    text = str(value).strip().lower().replace(" ", "").replace("-", "")
+    text = str(value).strip().lower()
+    text = "".join(ch for ch in text if ch.isalnum())
 
     if not text:
         return None
 
-    aliases = {
-        "euro95": "euro95",
-        "euro95premium": "euro95",
-        "euro95super": "euro95",
-        "euro98": "euro95",
-        "benzine": "euro95",
-        "gasoline": "euro95",
-        "diesel": "diesel",
-        "b7": "diesel",
-        "b10": "diesel",
-        "lpg": "lpg",
-        "autogas": "lpg",
-        "cng": "lpg",
-    }
+    if text.startswith("euro95") or "euro95" in text:
+        return "euro95"
 
-    return aliases.get(text, text)
+    if (
+        text.startswith("euro98")
+        or "superplus" in text
+        or text.startswith("super98")
+        or text.startswith("superplus98")
+        or "super98" in text
+    ):
+        return "superplus"
+
+    if (
+        text.startswith("diesel")
+        or text.startswith("b7")
+        or text.startswith("b10")
+        or "diesel" in text
+    ):
+        return "diesel"
+
+    if (
+        text.startswith("lpg")
+        or text.startswith("autogas")
+        or text.startswith("cng")
+        or "autogas" in text
+        or "cng" in text
+    ):
+        return "lpg"
+
+    return text
 
 
 def _parse_numeric_price(value):
@@ -148,6 +163,42 @@ def _extract_fuel_station_details(item, selected_fuel_type):
 
     if fuel_type is None:
         fuel_type = selected
+
+    price_candidates = []
+
+    for field in ("prices", "fuelPrices"):
+        value = item.get(field)
+        if isinstance(value, list):
+            price_candidates.extend(value)
+        elif isinstance(value, dict):
+            price_candidates.append(value)
+
+    for entry in price_candidates:
+        if not isinstance(entry, dict):
+            continue
+
+        entry_type = _normalize_fuel_type(
+            entry.get("fuelType")
+            or entry.get("fullType")
+            or entry.get("fuelTypeCode")
+            or entry.get("fuelName")
+            or entry.get("name")
+            or entry.get("type")
+        )
+
+        if entry_type is None:
+            continue
+
+        if entry_type != selected:
+            continue
+
+        parsed = _parse_numeric_price(
+            entry.get("value")
+            or entry.get("price")
+        )
+
+        if parsed is not None:
+            return entry_type, parsed
 
     candidate_price = _parse_numeric_price(item.get("value"))
 
