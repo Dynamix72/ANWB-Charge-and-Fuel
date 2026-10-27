@@ -176,7 +176,7 @@ class AnwbClient:
                 ) from err
 
  
-     async def _ors_get(
+    async def _ors_get(
         self,
         url: str,
         api_key: str,
@@ -222,7 +222,6 @@ class AnwbClient:
             {
                 "text": destination,
                 "size": 1,
-                "api_key": api_key,
             },
         )
     
@@ -309,10 +308,11 @@ class AnwbClient:
             total=self._timeout
         )
     
-        headers = {}
-        
-        params["api_key"] = api_key
-    
+        headers = {
+            "Authorization": api_key,
+            "Content-Type": "application/json",
+        }
+          
         payload = {
             "coordinates": [
                 [start_lon, start_lat],
