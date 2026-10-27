@@ -17,6 +17,8 @@ DOMAIN = "anwb_charge_and_fuel"
 PLATFORMS = [
     "sensor",
     "select",
+    "number",
+    "button",
 ]
 
 _LOGGER = logging.getLogger(__name__)
