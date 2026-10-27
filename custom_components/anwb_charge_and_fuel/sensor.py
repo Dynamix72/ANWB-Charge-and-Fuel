@@ -47,15 +47,7 @@ async def async_setup_entry(
         )
 
     entities: List[SensorEntity] = [
-        CheapestChargerSensor(
-            coordinator,
-            entry.entry_id,
-        ),
         ChargerCountSensor(
-            coordinator,
-            entry.entry_id,
-        ),
-        CheapestFuelSensor(
             coordinator,
             entry.entry_id,
         ),
@@ -87,6 +79,7 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+
 
 class AnwbBaseSensor(
     CoordinatorEntity,
@@ -137,71 +130,6 @@ class AnwbBaseSensor(
 
         return None
 
-
-class CheapestChargerSensor(
-    AnwbBaseSensor,
-):
-    DEVICE_TYPE = "charge"    
-    
-    """Cheapest charger."""
-
-    def __init__(
-        self,
-        coordinator,
-        entry_id: str,
-    ):
-        super().__init__(
-            coordinator,
-            entry_id,
-            "ANWB Cheapest Charger",
-            "cheapest_charger",
-        )
-
-    @property
-    def native_value(self):
-        chargers = (
-            self.coordinator.data or {}
-        ).get(
-            "chargers",
-            [],
-        )
-
-        if not chargers:
-            return None
-
-        return chargers[0].get("price")
-
-    @property
-    def extra_state_attributes(self):
-        chargers = (
-            self.coordinator.data or {}
-        ).get(
-            "chargers",
-            [],
-        )
-
-        if not chargers:
-            return {}
-        item = chargers[0]
-        
-        coords = (
-            item.get("charger", {})
-                .get("coordinates", {})
-        )
-        
-        return {
-            "rank": 1,
-            "price": item.get("price"),
-            "distance_km": item.get("distance_km"),
-            "max_power_kw": item.get("max_power_kw"),
-        
-            "latitude": coords.get("latitude"),
-            "longitude": coords.get("longitude"),
-        
-            "coordinates": coords,
-        
-            "raw": item.get("charger"),
-        }
 
 class ChargerCountSensor(
     AnwbBaseSensor,
@@ -285,6 +213,10 @@ class TopChargerSensor(
         item = chargers[
             self.rank - 1
         ]
+        coords = (
+            item.get("charger", {})
+            .get("coordinates", {})
+        )
 
         return {
             "rank": self.rank,
@@ -295,66 +227,10 @@ class TopChargerSensor(
             "max_power_kw": item.get(
                 "max_power_kw"
             ),
+            "latitude": coords.get("latitude"),
+            "longitude": coords.get("longitude"),
+            "coordinates": coords,
             "raw": item.get("charger"),
-        }
-
-
-class CheapestFuelSensor(
-    AnwbBaseSensor,
-):
-    DEVICE_TYPE = "fuel"
-    """Cheapest fuel."""
-
-    def __init__(
-        self,
-        coordinator,
-        entry_id,
-    ):
-        super().__init__(
-            coordinator,
-            entry_id,
-            "ANWB Cheapest Fuel",
-            "cheapest_fuel",
-        )
-
-    @property
-    def native_value(self):
-        fuels = (
-            self.coordinator.data or {}
-        ).get(
-            "fuel_stations",
-            [],
-        )
-
-        if not fuels:
-            return None
-
-        return fuels[0].get("price")
-
-    @property
-    def extra_state_attributes(self):
-        fuels = (
-            self.coordinator.data or {}
-        ).get(
-            "fuel_stations",
-            [],
-        )
-
-        if not fuels:
-            return {}
-
-        item = fuels[0]
-
-        return {
-            "rank": 1,
-            "price": item.get("price"),
-            "distance_km": item.get(
-                "distance_km"
-            ),
-            "fuel_type": item.get(
-                "fuel_type"
-            ),
-            "raw": item.get("station"),
         }
 
 
@@ -440,6 +316,10 @@ class TopFuelSensor(
         item = fuels[
             self.rank - 1
         ]
+        coords = (
+            item.get("station", {})
+            .get("coordinates", {})
+        )
 
         return {
             "rank": self.rank,
@@ -450,6 +330,9 @@ class TopFuelSensor(
             "fuel_type": item.get(
                 "fuel_type"
             ),
+            "latitude": coords.get("latitude"),
+            "longitude": coords.get("longitude"),
+            "coordinates": coords,
             "raw": item.get("station"),
         }
 
@@ -553,3 +436,4 @@ class ANWBResultsSensor(
                 [],
             ),
         }
+
