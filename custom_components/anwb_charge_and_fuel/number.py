@@ -49,7 +49,6 @@ class ANWBRadiusNumber(
     _attr_entity_category = EntityCategory.CONFIG
 
     _attr_native_min_value = MIN_RADIUS
-    _attr_native_max_value = MAX_RADIUS
     _attr_native_step = 1
 
     _attr_native_unit_of_measurement = (
@@ -102,6 +101,38 @@ class ANWBRadiusNumber(
             )
         )
 
+    @property
+    def native_max_value(self):
+        """Return maximum allowed value."""
+    
+        destination = getattr(
+            self.coordinator,
+            "destination",
+            "",
+        )
+    
+        #
+        # Geen bestemming
+        #
+    
+        if not destination:
+            return 10
+    
+        #
+        # Bestemming aanwezig
+        #
+    
+        route_distance = getattr(
+            self.coordinator,
+            "route_distance_km",
+            10,
+        )
+    
+        return max(
+            1,
+            int(route_distance),
+        )
+    
     async def async_set_native_value(
         self,
         value: float,
