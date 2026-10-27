@@ -11,6 +11,8 @@ from homeassistant import config_entries
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
+    SelectSelector,
+    SelectSelectorConfig,
     TextSelector,
     TextSelectorConfig,
 )
@@ -19,6 +21,9 @@ from .const import (
     DOMAIN,
     CONF_DEVICE_TRACKER,
     CONF_ORS_API_KEY,
+    CONF_DATA_MODE,
+    DATA_MODES,
+    DEFAULT_DATA_MODE,
 )
 
 
@@ -37,8 +42,11 @@ class ConfigFlow(
         """Handle initial setup."""
 
         if user_input is not None:
+
             await self.async_set_unique_id(
-                user_input[CONF_DEVICE_TRACKER]
+                user_input[
+                    CONF_DEVICE_TRACKER
+                ]
             )
 
             self._abort_if_unique_id_configured()
@@ -59,6 +67,17 @@ class ConfigFlow(
                             domain="device_tracker"
                         )
                     ),
+
+                    vol.Optional(
+                        CONF_DATA_MODE,
+                        default=DEFAULT_DATA_MODE,
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=DATA_MODES,
+                            mode="dropdown",
+                        )
+                    ),
+
                     vol.Optional(
                         CONF_ORS_API_KEY,
                         default="",
@@ -75,7 +94,8 @@ class ConfigFlow(
     def async_get_options_flow(
         config_entry,
     ):
-        """Get options flow."""
+        """Return options flow."""
+
         return OptionsFlowHandler(
             config_entry
         )
@@ -90,7 +110,6 @@ class OptionsFlowHandler(
         self,
         config_entry,
     ):
-        """Initialize options flow."""
         self._config_entry = config_entry
 
     async def async_step_init(
@@ -108,6 +127,13 @@ class OptionsFlowHandler(
                         user_input.get(
                             CONF_DEVICE_TRACKER
                         ),
+
+                    CONF_DATA_MODE:
+                        user_input.get(
+                            CONF_DATA_MODE,
+                            DEFAULT_DATA_MODE,
+                        ),
+
                     CONF_ORS_API_KEY:
                         user_input.get(
                             CONF_ORS_API_KEY,
@@ -130,6 +156,16 @@ class OptionsFlowHandler(
             )
         )
 
+        current_data_mode = (
+            self._config_entry.options.get(
+                CONF_DATA_MODE
+            )
+            or self._config_entry.data.get(
+                CONF_DATA_MODE
+            )
+            or DEFAULT_DATA_MODE
+        )
+
         current_ors_key = (
             self._config_entry.options.get(
                 CONF_ORS_API_KEY
@@ -150,6 +186,16 @@ class OptionsFlowHandler(
                     ): EntitySelector(
                         EntitySelectorConfig(
                             domain="device_tracker"
+                        )
+                    ),
+
+                    vol.Required(
+                        CONF_DATA_MODE,
+                        default=current_data_mode,
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=DATA_MODES,
+                            mode="dropdown",
                         )
                     ),
 
