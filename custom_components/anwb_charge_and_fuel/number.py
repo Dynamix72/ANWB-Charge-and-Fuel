@@ -8,6 +8,8 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -43,6 +45,7 @@ class ANWBRadiusNumber(
 
     _attr_name = "Zoekafstand"
     _attr_icon = "mdi:map-marker-radius"
+    _attr_entity_category = EntityCategory.CONFIG
 
     _attr_native_min_value = MIN_RADIUS
     _attr_native_max_value = MAX_RADIUS
@@ -54,7 +57,10 @@ class ANWBRadiusNumber(
 
     _attr_mode = "slider"
 
-    def __init__(self, coordinator):
+    def __init__(
+        self,
+        coordinator,
+    ):
         """Initialize entity."""
 
         super().__init__(coordinator)
@@ -70,6 +76,18 @@ class ANWBRadiusNumber(
             self.coordinator.radius = (
                 DEFAULT_RADIUS
             )
+
+    @property
+    def device_info(self):
+        """Return device information."""
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, "charge")
+            },
+            name="ANWB Charge",
+            manufacturer="ANWB",
+        )
 
     @property
     def native_value(self):
