@@ -197,11 +197,14 @@ class AnwbClient:
             params=params,
             timeout=timeout,
         ) as resp:
-    
-            if resp.status != 200:
+            
+             if resp.status != 200:
+                text = await resp.text()
+            
                 raise AnwbApiError(
-                    f"ORS error {resp.status}"
-                )
+                    f"ORS error {resp.status}: {text}"
+                )   
+               
     
             return await resp.json()
 
