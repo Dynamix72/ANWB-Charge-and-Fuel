@@ -7,6 +7,8 @@ from __future__ import annotations
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -30,55 +32,78 @@ async def async_setup_entry(
     )
 
 
-class ANWBRefreshButton(
+class ANWBBaseButton(
     CoordinatorEntity,
     ButtonEntity,
+):
+    """Base button."""
+
+    _attr_entity_category = (
+        EntityCategory.CONFIG
+    )
+
+    @property
+    def device_info(self):
+        """Return device information."""
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, "settings")
+            },
+            name="ANWB Settings",
+            manufacturer="ANWB",
+        )
+
+
+class ANWBRefreshButton(
+    ANWBBaseButton,
 ):
     """Refresh ANWB data."""
 
     _attr_name = "Gegevens ophalen"
     _attr_icon = "mdi:refresh"
 
-    def __init__(self, coordinator):
-        """Initialize button."""
+    def __init__(
+        self,
+        coordinator,
+    ):
         super().__init__(coordinator)
 
         self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_refresh"
+            f"{coordinator.config_entry.entry_id}"
+            "_refresh"
         )
 
-    async def async_press(self) -> None:
+    async def async_press(
+        self,
+    ) -> None:
         """Refresh data."""
+
         await self.coordinator.async_request_refresh()
 
 
 class ANWBUpdateLocationButton(
-    CoordinatorEntity,
-    ButtonEntity,
+    ANWBBaseButton,
 ):
-    """Update device tracker location."""
+    """Update location."""
 
     _attr_name = "Locatie vernieuwen"
     _attr_icon = "mdi:crosshairs-gps"
 
-    def __init__(self, coordinator):
-        """Initialize button."""
+    def __init__(
+        self,
+        coordinator,
+    ):
         super().__init__(coordinator)
 
         self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_update_location"
+            f"{coordinator.config_entry.entry_id}"
+            "_update_location"
         )
 
-    async def async_press(self) -> None:
-        """Update location and refresh."""
-
-        #
-        # In de huidige versie doet de coordinator
-        # bij iedere refresh opnieuw een uitlezing
-        # van het device_tracker entity.
-        #
-        # Daarom is een refresh voldoende.
-        #
+    async def async_press(
+        self,
+    ) -> None:
+        """Refresh tracker data."""
 
         await self.coordinator.async_request_refresh()
-
