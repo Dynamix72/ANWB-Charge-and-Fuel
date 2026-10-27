@@ -12,7 +12,9 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    DOMAIN, CONF_DEVICE_TRACKER, CONF_ORS_API_KEY, CONF_DATA_MODE, CONF_FUEL_TYPE, DATA_MODES, FUEL_TYPES, DEFAULT_DATA_MODE, DEFAULT_FUEL_TYPE
+    DOMAIN,
+    CONF_DEVICE_TRACKER,
+    CONF_ORS_API_KEY,
 )
 
 
