@@ -182,21 +182,26 @@ class CheapestChargerSensor(
 
         if not chargers:
             return {}
-
         item = chargers[0]
-
+        
+        coords = (
+            item.get("charger", {})
+                .get("coordinates", {})
+        )
+        
         return {
             "rank": 1,
             "price": item.get("price"),
-            "distance_km": item.get(
-                "distance_km"
-            ),
-            "max_power_kw": item.get(
-                "max_power_kw"
-            ),
+            "distance_km": item.get("distance_km"),
+            "max_power_kw": item.get("max_power_kw"),
+        
+            "latitude": coords.get("latitude"),
+            "longitude": coords.get("longitude"),
+        
+            "coordinates": coords,
+        
             "raw": item.get("charger"),
         }
-
 
 class ChargerCountSensor(
     AnwbBaseSensor,
