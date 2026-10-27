@@ -149,6 +149,125 @@ def _parse_numeric_price(value):
     return None
 
 
+def _connector_matches_charger_type(power_kw: float, charger_type: str) -> bool:
+    """Return True when connector power matches the selected charger type."""
+
+    if not charger_type or charger_type == "all":
+        return True
+
+    if charger_type == "ac":
+        return power_kw < 50
+
+    if charger_type == "fast":
+        return 50 <= power_kw < 100
+
+    if charger_type == "ultrafast":
+        return power_kw >= 100
+
+    return True
+
+
+def _get_connector_power_kw(connector: dict) -> float:
+    """Return connector power in kW."""
+
+    if not isinstance(connector, dict):
+        return 0.0
+
+    value = connector.get("maxPowerInKW")
+
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _extract_connector_price(connector: dict):
+    """Extract the energy price from a connector, preferring ENERGY components."""
+
+    if not isinstance(connector, dict):
+        return None
+
+    prices = connector.get("prices")
+    if isinstance(prices, dict):
+        prices = [prices]
+
+    if isinstance(prices, list):
+        for price_entry in prices:
+            if not isinstance(price_entry, dict):
+                continue
+
+            price_components = (
+                price_entry.get("priceComponents") or []
+            )
+
+            if isinstance(price_components, list):
+                for component in price_components:
+                    if not isinstance(component, dict):
+                        continue
+
+                    code = str(component.get("code") or "").upper()
+                    name = str(component.get("name") or "").lower()
+
+                    if code == "ENERGY" or name == "energie":
+                        parsed = _parse_numeric_price(
+                            component.get("value")
+                        )
+                        if parsed is not None:
+                            return parsed
+
+            parsed = _parse_numeric_price(
+                price_entry.get("value")
+                or price_entry.get("price")
+            )
+            if parsed is not None:
+                return parsed
+
+    parsed = _parse_numeric_price(connector.get("price"))
+    if parsed is not None:
+        return parsed
+
+    return None
+
+
+def _extract_charger_price(item: dict, charger_type: str):
+    """Return the most relevant charger price for the selected charger type."""
+
+    if not isinstance(item, dict):
+        return None
+
+    evses = item.get("electricVehicleSupplyEquipment", []) or []
+    connectors = []
+
+    for evse in evses:
+        if not isinstance(evse, dict):
+            continue
+
+        for connector in evse.get("connectors", []) or []:
+            if isinstance(connector, dict):
+                connectors.append(connector)
+
+    if not connectors:
+        return _parse_numeric_price(item.get("price"))
+
+    if charger_type in ("ac", "fast", "ultrafast"):
+        matched_connectors = [
+            connector
+            for connector in connectors
+            if _connector_matches_charger_type(
+                _get_connector_power_kw(connector),
+                charger_type,
+            )
+        ]
+        connectors = matched_connectors or connectors
+
+    for connector in connectors:
+        price = _extract_connector_price(connector)
+        if price is not None:
+            return price
+
+    return _parse_numeric_price(item.get("price"))
+
+
 def _extract_fuel_station_details(item, selected_fuel_type):
     """Extract the matching fuel type and price from a station payload."""
 
@@ -459,25 +578,10 @@ class RouteCoordinator(DataUpdateCoordinator):
                     ):
                         continue
 
-                    price = None
-
-                    price_field = (
-                        item.get("price")
-                        or {}
+                    price = _extract_charger_price(
+                        item,
+                        self.charger_type,
                     )
-
-                    if isinstance(
-                        price_field,
-                        dict,
-                    ):
-                        try:
-                            price = float(
-                                price_field.get(
-                                    "price"
-                                )
-                            )
-                        except Exception:
-                            price = None
 
                     result["chargers"].append(
                         {
