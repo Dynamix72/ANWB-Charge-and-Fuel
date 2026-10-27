@@ -4,25 +4,13 @@ Text entities for ANWB Charge & Fuel.
 
 from __future__ import annotations
 
-from homeassistant.components.text import (
-    TextEntity,
-)
-
-from homeassistant.config_entries import (
-    ConfigEntry,
-)
-
-from homeassistant.core import (
-    HomeAssistant,
-)
-
-from homeassistant.helpers.entity_platform import (
-    AddEntitiesCallback,
-)
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-)
+from homeassistant.components.text import TextEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN
 
@@ -52,11 +40,13 @@ class ANWBDestinationText(
     """Destination text entity."""
 
     _attr_name = "Bestemming"
-
     _attr_icon = "mdi:map-marker"
 
-    _attr_native_min = 0
+    _attr_entity_category = (
+        EntityCategory.CONFIG
+    )
 
+    _attr_native_min = 0
     _attr_native_max = 255
 
     _attr_mode = "text"
@@ -75,8 +65,22 @@ class ANWBDestinationText(
         )
 
     @property
-    def native_value(self) -> str:
-        """Return destination value."""
+    def device_info(self):
+        """Return device information."""
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, "settings")
+            },
+            name="ANWB Settings",
+            manufacturer="ANWB",
+        )
+
+    @property
+    def native_value(
+        self,
+    ) -> str:
+        """Return destination."""
 
         return getattr(
             self.coordinator,
@@ -90,7 +94,9 @@ class ANWBDestinationText(
     ) -> None:
         """Update destination."""
 
-        self.coordinator.destination = value.strip()
+        self.coordinator.destination = (
+            value.strip()
+        )
 
         await self.coordinator.async_request_refresh()
 
