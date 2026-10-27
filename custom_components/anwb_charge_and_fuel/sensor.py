@@ -2,6 +2,11 @@
 Sensors exposing the cheapest chargers and fuel stations,
 top-N lists and all combined results.
 """
+from . import DOMAIN
+
+from homeassistant.helpers.device_registry import (
+    DeviceInfo,
+)
 
 from typing import List
 import logging
@@ -83,12 +88,13 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
-
 class AnwbBaseSensor(
     CoordinatorEntity,
     SensorEntity,
 ):
     """Base sensor."""
+
+    DEVICE_TYPE = None
 
     def __init__(
         self,
@@ -100,15 +106,43 @@ class AnwbBaseSensor(
         super().__init__(coordinator)
 
         self.coordinator = coordinator
+
         self._attr_name = name
+
         self._attr_unique_id = (
             f"{entry_id}_{unique_id}"
         )
+
+    @property
+    def device_info(self):
+        """Return device info."""
+
+        if self.DEVICE_TYPE == "charge":
+            return DeviceInfo(
+                identifiers={
+                    (DOMAIN, "charge")
+                },
+                name="ANWB Charge",
+                manufacturer="ANWB",
+            )
+
+        if self.DEVICE_TYPE == "fuel":
+            return DeviceInfo(
+                identifiers={
+                    (DOMAIN, "fuel")
+                },
+                name="ANWB Fuel",
+                manufacturer="ANWB",
+            )
+
+        return None
 
 
 class CheapestChargerSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "charge"    
+    
     """Cheapest charger."""
 
     def __init__(
@@ -167,6 +201,7 @@ class CheapestChargerSensor(
 class ChargerCountSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "charge"
     """Number of chargers."""
 
     def __init__(
@@ -196,6 +231,7 @@ class ChargerCountSensor(
 class TopChargerSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "charge"
     """Top charger sensor."""
 
     def __init__(
@@ -261,6 +297,7 @@ class TopChargerSensor(
 class CheapestFuelSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "fuel"
     """Cheapest fuel."""
 
     def __init__(
@@ -319,6 +356,7 @@ class CheapestFuelSensor(
 class FuelCountSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "fuel"
     """Fuel count."""
 
     def __init__(
@@ -348,6 +386,7 @@ class FuelCountSensor(
 class TopFuelSensor(
     AnwbBaseSensor,
 ):
+    DEVICE_TYPE = "fuel"
     """Top fuel sensor."""
 
     def __init__(
@@ -415,6 +454,8 @@ class ANWBResultsSensor(
 ):
     """Combined results sensor."""
 
+    DEVICE_TYPE = None
+
     def __init__(
         self,
         coordinator,
@@ -428,13 +469,29 @@ class ANWBResultsSensor(
         )
 
     @property
+    def device_info(self):
+        """Return device information."""
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, "settings")
+            },
+            name="ANWB Settings",
+            manufacturer="ANWB",
+        )
+
+    @property
     def native_value(self):
+        """Return last update state."""
+
         return (
             self.coordinator.last_update_success
         )
 
     @property
     def extra_state_attributes(self):
+        """Expose all results."""
+
         data = (
             self.coordinator.data or {}
         )
