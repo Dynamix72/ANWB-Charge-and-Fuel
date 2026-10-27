@@ -460,6 +460,67 @@ class RouteCoordinator(DataUpdateCoordinator):
         lon = tracker_state.attributes.get(
             "longitude"
         )
+        
+        destination = getattr(
+            self,
+            "destination",
+            "",
+        )
+        
+        if destination and self._ors_key:
+        
+            try:
+        
+                destination_data = (
+                    await self._client.geocode_destination(
+                        self._ors_key,
+                        destination,
+                    )
+                )
+        
+                _LOGGER.warning(
+                    "ANWB DESTINATION=%s",
+                    destination_data,
+                )
+        
+                route = await self._client.get_route(
+                    self._ors_key,
+                    lat,
+                    lon,
+                    destination_data["latitude"],
+                    destination_data["longitude"],
+                )
+        
+                self.route_distance_km = (
+                    route["distance_km"]
+                )
+        
+                _LOGGER.warning(
+                    "ANWB ROUTE=%s km",
+                    self.route_distance_km,
+                )
+        
+                marker = (
+                    self._client.get_marker_on_route(
+                        route["geometry"],
+                        min(
+                            self.radius,
+                            route["distance_km"],
+                        ),
+                    )
+                )
+        
+                _LOGGER.warning(
+                    "ANWB MARKER=%s",
+                    marker,
+                )
+        
+            except Exception as err:
+        
+                _LOGGER.error(
+                    "ANWB ORS ERROR: %s",
+                    err,
+                )
 
         if lat is None or lon is None:
             raise UpdateFailed(
