@@ -66,69 +66,7 @@ class ConfigFlow(
                         default="",
                     ): TextSelector(
                         TextSelectorConfig(
-                            multiline=False
-                        )
-                    ),
-                }
-            ),
-        )
-
-@staticmethod
-def async_get_options_flow(config_entry):
-    return OptionsFlowHandler(config_entry)
-
-
-class OptionsFlowHandler(
-    config_entries.OptionsFlow
-):
-    """Handle options."""
-
-    def __init__(self, config_entry):
-        self._config_entry = config_entry
-        
-    async def async_step_init(
-        self,
-        user_input=None,
-    ):
-        """Manage options."""
-
-        if user_input is not None:
-            self.hass.config_entries.async_update_entry(
-                self._config_entry,
-                options={
-                    CONF_ORS_API_KEY:
-                        user_input.get(
-                            CONF_ORS_API_KEY,
-                            "",
-                        )
-                },
-            )
-
-            return self.async_create_entry(
-                title="",
-                data={},
-            )
-
-        current_ors_key = (
-            self._config_entry.options.get(
-                CONF_ORS_API_KEY
-            )
-            or self._config_entry.data.get(
-                CONF_ORS_API_KEY
-            )
-            or ""
-        )
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_ORS_API_KEY,
-                        default=current_ors_key,
-                    ): TextSelector(
-                        TextSelectorConfig(
-                            multiline=False
+                            multiline=False,
                         )
                     ),
                 }
