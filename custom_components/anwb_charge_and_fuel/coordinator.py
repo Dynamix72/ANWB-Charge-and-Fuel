@@ -471,6 +471,8 @@ class RouteCoordinator(DataUpdateCoordinator):
             "",
         )
         
+        route_marker = None
+        
         if destination and self._ors_key:
         
             try:
@@ -494,7 +496,6 @@ class RouteCoordinator(DataUpdateCoordinator):
                     route["distance_km"]
                 )
        
-   
                 marker = (
                     self._client.get_marker_on_route(
                         route["geometry"],
@@ -504,14 +505,15 @@ class RouteCoordinator(DataUpdateCoordinator):
                         ),
                     )
                 )
-
-                result["route_marker"] = marker
-
+                
+                route_marker = marker
+                
                 _LOGGER.warning(
                     "ANWB MARKER=%s",
                     marker,
                 )
-
+                
+ 
                 search_lat = lat
                 search_lon = lon
                 search_radius = min(self.radius, 10)
@@ -550,7 +552,7 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "longitude": lon,
             },
             "data_mode": data_mode,
-            "route_marker": None,
+            "route_marker": route_marker,
         }
 
         try:
