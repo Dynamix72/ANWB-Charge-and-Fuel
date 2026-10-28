@@ -18,7 +18,6 @@ from .api import AnwbClient, AnwbApiError
 from .const import (
     DEFAULT_FUEL_TYPE,
     DEFAULT_CHARGER_TYPE,
-    DEFAULT_LOCATION_SOURCE,
     CONF_DATA_MODE,
     DEFAULT_DATA_MODE,
 )
@@ -416,7 +415,6 @@ class RouteCoordinator(DataUpdateCoordinator):
         )
         self.fuel_type = DEFAULT_FUEL_TYPE
         self.charger_type = DEFAULT_CHARGER_TYPE
-        self.location_source = DEFAULT_LOCATION_SOURCE
 
         #
         # Later gebruikt door number.py
