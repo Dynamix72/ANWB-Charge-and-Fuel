@@ -239,10 +239,10 @@ class TopChargerSensor(
             "longitude": coords.get("longitude"),
             "coordinates": coords,
             "raw": item.get("charger"),
-            "available_connectors": charger.get(
+            "available_connectors": item.get(
                 "available_connectors"
             ),
-            "total_connectors": charger.get(
+            "total_connectors": item.get(
                 "total_connectors"
             ),
         }
