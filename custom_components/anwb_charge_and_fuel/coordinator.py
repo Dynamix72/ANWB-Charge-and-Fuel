@@ -504,7 +504,9 @@ class RouteCoordinator(DataUpdateCoordinator):
                         ),
                     )
                 )
-        
+
+                result["route_marker"] = marker
+
                 _LOGGER.warning(
                     "ANWB MARKER=%s",
                     marker,
@@ -548,6 +550,7 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "longitude": lon,
             },
             "data_mode": data_mode,
+            "route_marker": None,
         }
 
         try:
