@@ -461,6 +461,10 @@ class RouteCoordinator(DataUpdateCoordinator):
             "longitude"
         )
         
+        search_lat = lat
+        search_lon = lon
+        search_radius = min(self.radius, 10)        
+        
         destination = getattr(
             self,
             "destination",
@@ -470,33 +474,14 @@ class RouteCoordinator(DataUpdateCoordinator):
         if destination and self._ors_key:
         
             try:
-                _LOGGER.warning(
-                    "ORS KEY PRESENT=%s",
-                    bool(self._ors_key),
-                )
-                
-                _LOGGER.warning(
-                    "ORS KEY LENGTH=%s",
-                    len(self._ors_key or "")
-                )
-                
-                if self._ors_key:
-                    _LOGGER.warning(
-                        "ORS KEY START=%s...",
-                        self._ors_key[:8],
-                    )
+
                 destination_data = (
                     await self._client.geocode_destination(
                         self._ors_key,
                         destination,
                     )
                 )
-        
-                _LOGGER.warning(
-                    "ANWB DESTINATION=%s",
-                    destination_data,
-                )
-        
+          
                 route = await self._client.get_route(
                     self._ors_key,
                     lat,
@@ -508,12 +493,8 @@ class RouteCoordinator(DataUpdateCoordinator):
                 self.route_distance_km = (
                     route["distance_km"]
                 )
-        
-                _LOGGER.warning(
-                    "ANWB ROUTE=%s km",
-                    self.route_distance_km,
-                )
-        
+       
+   
                 marker = (
                     self._client.get_marker_on_route(
                         route["geometry"],
@@ -528,7 +509,23 @@ class RouteCoordinator(DataUpdateCoordinator):
                     "ANWB MARKER=%s",
                     marker,
                 )
-        
+
+                search_lat = lat
+                search_lon = lon
+                search_radius = min(self.radius, 10)
+                
+                if marker:
+                    search_lat = marker["latitude"]
+                    search_lon = marker["longitude"]
+                    search_radius = self.radius
+                
+                _LOGGER.warning(
+                    "ANWB SEARCH CENTER=%s,%s radius=%s",
+                    search_lat,
+                    search_lon,
+                    search_radius,
+                )
+            
             except Exception as err:
         
                 _LOGGER.error(
@@ -563,9 +560,9 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "both",
             ):
                 raw = await self._client.get_chargers(
-                    lat,
-                    lon,
-                    self.radius,
+                    search_lat,
+                    search_lon,
+                    search_radius,
                 )
 
                 items = (
@@ -685,9 +682,9 @@ class RouteCoordinator(DataUpdateCoordinator):
                 "both",
             ):
                 raw = await self._client.get_fuel_stations(
-                    lat,
-                    lon,
-                    self.radius,
+                    search_lat,
+                    search_lon,
+                    search_radius,
                 )
 
                 items = (
