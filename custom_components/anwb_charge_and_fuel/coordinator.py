@@ -476,18 +476,37 @@ class RouteCoordinator(DataUpdateCoordinator):
         )
         
         route_marker = None
+        search_lat = lat
+        search_lon = lon
+        
+        #
+        # Geen bestemming:
+        # zoek rond huidige locatie
+        # radius = min(configuratie, 10 km)
+        #
+        search_radius = min(
+            self.radius,
+            DEFAULT_SEARCH_RADIUS_KM,
+        )
+        
+        destination = getattr(
+            self,
+            "destination",
+            None,
+        )
+        
+        route_marker = None
         
         if destination and self._ors_key:
         
             try:
-
                 destination_data = (
                     await self._client.geocode_destination(
                         self._ors_key,
                         destination,
                     )
                 )
-          
+        
                 route = await self._client.get_route(
                     self._ors_key,
                     lat,
@@ -499,47 +518,61 @@ class RouteCoordinator(DataUpdateCoordinator):
                 self.route_distance_km = (
                     route["distance_km"]
                 )
-       
+        
+                marker_distance_km = min(
+                    self.radius,
+                    route["distance_km"],
+                )
+        
                 marker = (
                     self._client.get_marker_on_route(
                         route["geometry"],
-                        min(
-                            self.radius,
-                            route["distance_km"],
-                        ),
+                        marker_distance_km,
                     )
                 )
-                
+        
                 route_marker = marker
-                
+        
+                _LOGGER.warning(
+                    "ANWB ROUTE DISTANCE=%s km",
+                    route["distance_km"],
+                )
+        
+                _LOGGER.warning(
+                    "ANWB MARKER DISTANCE=%s km",
+                    marker_distance_km,
+                )
+        
                 _LOGGER.warning(
                     "ANWB MARKER=%s",
                     marker,
                 )
-                
- 
-                search_lat = lat
-                search_lon = lon
-                search_radius = DEFAULT_SEARCH_RADIUS_KM
-                
+        
                 if marker:
                     search_lat = marker["latitude"]
                     search_lon = marker["longitude"]
-                                 
+        
+                    #
+                    # Met bestemming altijd 10 km
+                    # rondom de marker zoeken
+                    #
+                    search_radius = (
+                        DEFAULT_SEARCH_RADIUS_KM
+                    )
+        
                 _LOGGER.warning(
                     "ANWB SEARCH CENTER=%s,%s radius=%s",
                     search_lat,
                     search_lon,
                     search_radius,
                 )
-            
+        
             except Exception as err:
         
                 _LOGGER.error(
                     "ANWB ORS ERROR: %s",
                     err,
                 )
-
         if lat is None or lon is None:
             raise UpdateFailed(
                 "Device tracker does not expose latitude/longitude"
