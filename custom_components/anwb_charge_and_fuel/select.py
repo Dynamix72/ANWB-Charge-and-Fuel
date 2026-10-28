@@ -29,7 +29,6 @@ from . import DOMAIN
 from .const import (
     FUEL_TYPES,
     CHARGER_TYPES,
-    LOCATION_SOURCES,
     DEFAULT_FUEL_TYPE,
     DEFAULT_CHARGER_TYPE,
 )
@@ -48,7 +47,6 @@ async def async_setup_entry(
         [
             ANWBFuelTypeSelect(coordinator),
             ANWBChargerTypeSelect(coordinator),
-            ANWBLocationSourceSelect(coordinator),
         ]
     )
 
@@ -196,54 +194,3 @@ class ANWBChargerTypeSelect(
             manufacturer="ANWB",
         )
 
-
-#
-# ANWB Settings
-#
-
-
-class ANWBLocationSourceSelect(
-    ANWBBaseSelect,
-):
-    """Location source."""
-
-    _attr_name = "Locatiebron"
-
-    _attr_icon = "mdi:crosshairs-gps"
-
-    _attr_options = LOCATION_SOURCES
-
-    _coordinator_attribute = (
-        "location_source"
-    )
-
-    def __init__(
-        self,
-        coordinator,
-    ):
-        super().__init__(coordinator)
-
-        self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}"
-            "_location_source"
-        )
-
-        if not hasattr(
-            coordinator,
-            "location_source",
-        ):
-            coordinator.location_source = (
-                DEFAULT_LOCATION_SOURCE
-            )
-
-    @property
-    def device_info(
-        self,
-    ):
-        return DeviceInfo(
-            identifiers={
-                (DOMAIN, "settings")
-            },
-            name="ANWB Settings",
-            manufacturer="ANWB",
-        )
