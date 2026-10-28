@@ -63,7 +63,8 @@ async def async_setup_entry(
     )
 
     entry_data["entry"] = entry
-        entry.async_on_unload(
+    
+    entry.async_on_unload(
         entry.add_update_listener(
             update_listener
         )
@@ -92,7 +93,6 @@ async def async_setup_entry(
     )
 
     return True
-
 
 async def async_unload_entry(
     hass: HomeAssistant,
