@@ -42,58 +42,20 @@ class ConfigFlow(
     ):
         """Handle initial setup."""
         if user_input is not None:
-        
-            old_data_mode = (
-                self._config_entry.options.get(
-                    CONF_DATA_MODE
-                )
-                or self._config_entry.data.get(
-                    CONF_DATA_MODE
-                )
-                or DEFAULT_DATA_MODE
+            await self.async_set_unique_id(
+                user_input[
+                    CONF_DEVICE_TRACKER
+                ]
             )
         
-            new_data_mode = user_input.get(
-                CONF_DATA_MODE,
-                DEFAULT_DATA_MODE,
-            )
-        
-            self.hass.config_entries.async_update_entry(
-                self._config_entry,
-                options={
-                    CONF_DEVICE_TRACKER:
-                        user_input.get(
-                            CONF_DEVICE_TRACKER
-                        ),
-                    CONF_DATA_MODE:
-                        new_data_mode,
-                    CONF_ORS_API_KEY:
-                        user_input.get(
-                            CONF_ORS_API_KEY,
-                            "",
-                        ),
-                },
-            )
-        
-            if old_data_mode != new_data_mode:
-                persistent_notification.create(
-                    self.hass,
-                    (
-                        "De ANWB Charge & Fuel modus is gewijzigd.\n\n"
-                        "Herstart Home Assistant om alle "
-                        "Charge/Fuel entities correct aan te "
-                        "maken of te verwijderen."
-                    ),
-                    title="ANWB Charge & Fuel",
-                    notification_id=(
-                        "anwb_restart_required"
-                    ),
-                )
+            self._abort_if_unique_id_configured()
         
             return self.async_create_entry(
-                title="",
-                data={},
+                title="ANWB Charge & Fuel",
+                data=user_input,
             )
+
+        
         
         return self.async_show_form(
             step_id="user",
@@ -180,6 +142,34 @@ class OptionsFlowHandler(
                         ),
                 },
             )
+
+            old_data_mode = (
+                self._config_entry.options.get(
+                    CONF_DATA_MODE
+                )
+                or self._config_entry.data.get(
+                    CONF_DATA_MODE
+                )
+                or DEFAULT_DATA_MODE
+            )
+            
+            new_data_mode = user_input.get(
+                CONF_DATA_MODE,
+                DEFAULT_DATA_MODE,
+            )
+            
+            if old_data_mode != new_data_mode:
+                persistent_notification.create(
+                    self.hass,
+                    (
+                        "De ANWB Charge & Fuel modus is gewijzigd.\n\n"
+                        "Herstart Home Assistant om alle "
+                        "Charge/Fuel entities correct aan te "
+                        "maken of te verwijderen."
+                    ),
+                    title="ANWB Charge & Fuel",
+                    notification_id="anwb_restart_required",
+                )
 
             return self.async_create_entry(
                 title="",
