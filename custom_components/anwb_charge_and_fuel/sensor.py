@@ -46,15 +46,13 @@ async def async_setup_entry(
             "Coordinator not initialized"
         )
 
+    data_mode = getattr(
+        coordinator,
+        "data_mode",
+        "both",
+    )
+    
     entities: List[SensorEntity] = [
-        ChargerCountSensor(
-            coordinator,
-            entry.entry_id,
-        ),
-        FuelCountSensor(
-            coordinator,
-            entry.entry_id,
-        ),
         RouteMarkerSensor(
             coordinator,
             entry.entry_id,
@@ -68,24 +66,56 @@ async def async_setup_entry(
             entry.entry_id,
         ),
     ]
-
-    for i in range(1, 11):
+    
+    #
+    # Charge sensors
+    #
+    if data_mode in (
+        "charge",
+        "both",
+    ):
         entities.append(
-            TopChargerSensor(
+            ChargerCountSensor(
                 coordinator,
                 entry.entry_id,
-                i,
             )
         )
-
+    
+        for i in range(1, 11):
+            entities.append(
+                TopChargerSensor(
+                    coordinator,
+                    entry.entry_id,
+                    i,
+                )
+            )
+    
+    #
+    # Fuel sensors
+    #
+    if data_mode in (
+        "fuel",
+        "both",
+    ):
         entities.append(
-            TopFuelSensor(
+            FuelCountSensor(
                 coordinator,
                 entry.entry_id,
-                i,
             )
         )
-
+    
+        for i in range(1, 11):
+            entities.append(
+                TopFuelSensor(
+                    coordinator,
+                    entry.entry_id,
+                    i,
+                )
+            )
+    
+    async_add_entities(
+        entities
+    )
     async_add_entities(entities)
 
 
