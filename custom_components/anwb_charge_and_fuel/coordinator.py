@@ -501,6 +501,10 @@ class RouteCoordinator(DataUpdateCoordinator):
             DEFAULT_SEARCH_RADIUS_KM,
         )
         
+        if not destination:
+            self.radius = DEFAULT_SEARCH_RADIUS_KM
+        
+            
         route_marker = None
         
         if destination and self._ors_key:
