@@ -55,6 +55,10 @@ async def async_setup_entry(
             coordinator,
             entry.entry_id,
         ),
+        RouteMarkerSensor(
+            coordinator,
+            entry.entry_id,
+        ),
         ANWBResultsSensor(
             coordinator,
             entry.entry_id,
@@ -334,6 +338,59 @@ class TopFuelSensor(
             "longitude": coords.get("longitude"),
             "coordinates": coords,
             "raw": item.get("station"),
+        }
+
+class RouteMarkerSensor(
+    AnwbBaseSensor,
+):
+    """Route marker sensor."""
+
+    DEVICE_TYPE = None
+
+    def __init__(
+        self,
+        coordinator,
+        entry_id,
+    ):
+        super().__init__(
+            coordinator,
+            entry_id,
+            "ANWB Route Marker",
+            "route_marker",
+        )
+
+    @property
+    def native_value(self):
+        marker = (
+            self.coordinator.data or {}
+        ).get(
+            "route_marker"
+        )
+
+        if not marker:
+            return None
+
+        return marker.get(
+            "distance_from_start"
+        )
+
+    @property
+    def extra_state_attributes(self):
+        marker = (
+            self.coordinator.data or {}
+        ).get(
+            "route_marker"
+        )
+
+        if not marker:
+            return {}
+
+        return {
+            "latitude": marker.get("latitude"),
+            "longitude": marker.get("longitude"),
+            "distance_from_start": marker.get(
+                "distance_from_start"
+            ),
         }
 
 
