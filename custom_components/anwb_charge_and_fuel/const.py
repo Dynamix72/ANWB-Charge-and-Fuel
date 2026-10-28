@@ -21,7 +21,6 @@ DEFAULT_DATA_MODE = "both"
 
 DEFAULT_FUEL_TYPE = "euro95"
 DEFAULT_CHARGER_TYPE = "all"
-DEFAULT_LOCATION_SOURCE = "current_location"
 
 #
 # Grenzen
@@ -58,9 +57,4 @@ CHARGER_TYPES = [
     "ultrafast",
 ]
 
-LOCATION_SOURCES = [
-    "current_location",
-    "destination",
-    "home",
-    "work",
-]
+
