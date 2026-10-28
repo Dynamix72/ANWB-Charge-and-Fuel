@@ -41,13 +41,44 @@ async def async_setup_entry(
 ) -> None:
     """Set up select entities."""
 
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    coordinator = hass.data[
+        DOMAIN
+    ][
+        entry.entry_id
+    ][
+        "coordinator"
+    ]
+
+    data_mode = getattr(
+        coordinator,
+        "data_mode",
+        "both",
+    )
+
+    entities = []
+
+    if data_mode in (
+        "charge",
+        "both",
+    ):
+        entities.append(
+            ANWBChargerTypeSelect(
+                coordinator
+            )
+        )
+
+    if data_mode in (
+        "fuel",
+        "both",
+    ):
+        entities.append(
+            ANWBFuelTypeSelect(
+                coordinator
+            )
+        )
 
     async_add_entities(
-        [
-            ANWBFuelTypeSelect(coordinator),
-            ANWBChargerTypeSelect(coordinator),
-        ]
+        entities
     )
 
 
