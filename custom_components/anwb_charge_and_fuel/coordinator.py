@@ -506,6 +506,7 @@ class RouteCoordinator(DataUpdateCoordinator):
         
             
         route_marker = None
+        route_geojson = None
         
         if destination and self._ors_key:
         
@@ -524,7 +525,9 @@ class RouteCoordinator(DataUpdateCoordinator):
                     destination_data["latitude"],
                     destination_data["longitude"],
                 )
-        
+
+                route_geojson = route["geometry"]
+                
                 self.route_distance_km = (
                     route["distance_km"]
                 )
@@ -599,6 +602,7 @@ class RouteCoordinator(DataUpdateCoordinator):
             },
             "data_mode": data_mode,
             "route_marker": route_marker,
+            "route_geojson": route_geojson,
         }
 
         try:
