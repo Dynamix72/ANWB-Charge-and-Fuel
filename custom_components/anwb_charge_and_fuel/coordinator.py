@@ -467,7 +467,7 @@ class RouteCoordinator(DataUpdateCoordinator):
         
         search_lat = lat
         search_lon = lon
-        search_radius = min(self.radius, 10)        
+        search_radius = DEFAULT_SEARCH_RADIUS_KM     
         
         destination = getattr(
             self,
@@ -520,13 +520,12 @@ class RouteCoordinator(DataUpdateCoordinator):
  
                 search_lat = lat
                 search_lon = lon
-                search_radius = min(self.radius, 10)
+                search_radius = DEFAULT_SEARCH_RADIUS_KM
                 
                 if marker:
                     search_lat = marker["latitude"]
                     search_lon = marker["longitude"]
-                    search_radius = self.radius
-                
+                                 
                 _LOGGER.warning(
                     "ANWB SEARCH CENTER=%s,%s radius=%s",
                     search_lat,
