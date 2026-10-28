@@ -32,7 +32,6 @@ from .const import (
     LOCATION_SOURCES,
     DEFAULT_FUEL_TYPE,
     DEFAULT_CHARGER_TYPE,
-    DEFAULT_LOCATION_SOURCE,
 )
 
 
