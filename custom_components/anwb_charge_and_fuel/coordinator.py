@@ -495,6 +495,12 @@ class RouteCoordinator(DataUpdateCoordinator):
             None,
         )
         
+        # Reset naar huidige zoekafstand
+        self.route_distance_km = min(
+            self.radius,
+            DEFAULT_SEARCH_RADIUS_KM,
+        )
+        
         route_marker = None
         
         if destination and self._ors_key:
