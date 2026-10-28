@@ -39,6 +39,15 @@ async def async_setup(
 
     return True
 
+async def update_listener(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> None:
+    """Reload config entry when options change."""
+
+    await hass.config_entries.async_reload(
+        entry.entry_id
+    )
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -54,6 +63,11 @@ async def async_setup_entry(
     )
 
     entry_data["entry"] = entry
+        entry.async_on_unload(
+        entry.add_update_listener(
+            update_listener
+        )
+    )
 
     coordinator = entry_data.get("coordinator")
 
