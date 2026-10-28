@@ -561,7 +561,7 @@ class RouteCoordinator(DataUpdateCoordinator):
                     )
         
                 _LOGGER.warning(
-                    "ANWB SEARCH CENTER=%s,%s radius=%s",
+                    "ANWB SEARCH CENTER=%s,%s radius=% route_distance=%ss",
                     search_lat,
                     search_lon,
                     search_radius,
