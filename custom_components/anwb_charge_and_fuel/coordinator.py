@@ -567,7 +567,7 @@ class RouteCoordinator(DataUpdateCoordinator):
                     )
         
                 _LOGGER.warning(
-                    "ANWB SEARCH CENTER=%s,%s radius=% route_distance=%ss",
+                    "ANWB RESET route_distance_km=%s destination=%s",
                     search_lat,
                     search_lon,
                     search_radius,
