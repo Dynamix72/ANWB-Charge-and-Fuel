@@ -59,6 +59,10 @@ async def async_setup_entry(
             coordinator,
             entry.entry_id,
         ),
+        RouteGeoJsonSensor(
+            coordinator,
+            entry.entry_id,
+        ),
         ANWBResultsSensor(
             coordinator,
             entry.entry_id,
@@ -391,6 +395,50 @@ class RouteMarkerSensor(
             "distance_from_start": marker.get(
                 "distance_from_start"
             ),
+        }
+
+class RouteGeoJsonSensor(
+    AnwbBaseSensor,
+):
+    """Route GeoJSON."""
+
+    DEVICE_TYPE = None
+
+    def __init__(
+        self,
+        coordinator,
+        entry_id,
+    ):
+        super().__init__(
+            coordinator,
+            entry_id,
+            "ANWB Route",
+            "route_geojson",
+        )
+
+    @property
+    def native_value(self):
+        route = (
+            self.coordinator.data or {}
+        ).get(
+            "route_geojson"
+        )
+
+        return "available" if route else None
+
+    @property
+    def extra_state_attributes(self):
+        route = (
+            self.coordinator.data or {}
+        ).get(
+            "route_geojson"
+        )
+
+        if not route:
+            return {}
+
+        return {
+            "geojson": route,
         }
 
 
