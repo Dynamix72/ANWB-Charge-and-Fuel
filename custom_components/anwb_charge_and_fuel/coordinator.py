@@ -710,6 +710,48 @@ class RouteCoordinator(DataUpdateCoordinator):
                         and power < 100
                     ):
                         continue
+                        
+                    available_connectors = 0
+                    total_connectors = 0
+                    
+                    for ev in evses:
+                        connectors = ev.get(
+                            "connectors",
+                            [],
+                        ) or []
+                    
+                        matching_connector = False
+                    
+                        for conn in connectors:
+                    
+                            connector_power = (
+                                _get_connector_power_kw(
+                                    conn
+                                )
+                            )
+                    
+                            if _connector_matches_charger_type(
+                                connector_power,
+                                self.charger_type,
+                            ):
+                                matching_connector = True
+                                break
+                    
+                        if not matching_connector:
+                            continue
+                    
+                        total_connectors += 1
+                    
+                        if (
+                            str(
+                                ev.get(
+                                    "status",
+                                    "",
+                                )
+                            ).upper()
+                            == "AVAILABLE"
+                        ):
+                            available_connectors += 1
 
                     price = _extract_charger_price(
                         item,
@@ -725,8 +767,15 @@ class RouteCoordinator(DataUpdateCoordinator):
                             ),
                             "max_power_kw": power,
                             "price": price,
+                            "available_connectors": (
+                                available_connectors
+                            ),
+                            "total_connectors": (
+                                total_connectors
+                            ),
                         }
                     )
+
 
             #
             # FUEL
