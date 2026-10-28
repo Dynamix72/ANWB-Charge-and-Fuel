@@ -23,6 +23,10 @@ from .const import (
     DEFAULT_DATA_MODE,
 )
 
+""""
+The default search radius is 10 km because otherwise the ANWB API returns too many results, causing it to return no data at all.
+"""
+DEFAULT_SEARCH_RADIUS_KM = 10
 
 _LOGGER = logging.getLogger(__name__)
 
