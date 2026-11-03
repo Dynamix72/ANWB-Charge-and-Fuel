@@ -91,10 +91,7 @@ class AnwbClient:
                         text[:200],
                     )
 
-                    #
                     # Rate limiting
-                    #
-
                     if (
                         status == 429
                         and attempt <= retries
@@ -114,10 +111,7 @@ class AnwbClient:
 
                         continue
 
-                    #
                     # Server errors
-                    #
-
                     if (
                         500 <= status < 600
                         and attempt <= retries
@@ -175,38 +169,31 @@ class AnwbClient:
                     f"Network error: {err}"
                 ) from err
 
- 
     async def _ors_get(
         self,
         url: str,
         api_key: str,
         params: dict,
     ) -> dict:
-    
         timeout = aiohttp.ClientTimeout(
             total=self._timeout
         )
-    
-        headers = {}
 
+        headers = {}
         params["api_key"] = api_key
-    
+
         async with self._session.get(
             url,
             headers=headers,
             params=params,
             timeout=timeout,
-        ) as resp:   
-    
-            
+        ) as resp:
             if resp.status != 200:
-               text = await resp.text()
-            
-               raise AnwbApiError(
-                   f"ORS error {resp.status}: {text}"
-               )   
-               
-    
+                text = await resp.text()
+                raise AnwbApiError(
+                    f"ORS error {resp.status}: {text}"
+                )
+
             return await resp.json()
 
     async def geocode_destination(
@@ -215,7 +202,7 @@ class AnwbClient:
         destination: str,
     ) -> dict:
         """Convert address to coordinates."""
-    
+
         result = await self._ors_get(
             ORS_GEOCODE_URL,
             api_key,
@@ -224,23 +211,23 @@ class AnwbClient:
                 "size": 1,
             },
         )
-    
+
         features = result.get(
             "features",
             [],
         )
-    
+
         if not features:
             raise AnwbApiError(
                 f"Destination not found: {destination}"
             )
-    
+
         coords = (
             features[0]
             ["geometry"]
             ["coordinates"]
         )
-    
+
         return {
             "longitude": coords[0],
             "latitude": coords[1],
@@ -251,7 +238,7 @@ class AnwbClient:
                 destination,
             ),
         }
-    
+
     async def get_chargers(
         self,
         lat: float,
@@ -303,47 +290,44 @@ class AnwbClient:
         end_lon: float,
     ) -> dict:
         """Get route from ORS."""
-    
+
         timeout = aiohttp.ClientTimeout(
             total=self._timeout
         )
-    
+
         headers = {
             "Authorization": api_key,
             "Content-Type": "application/json",
         }
-          
+
         payload = {
             "coordinates": [
                 [start_lon, start_lat],
                 [end_lon, end_lat],
             ]
         }
-    
+
         async with self._session.post(
             ORS_ROUTE_URL,
             headers=headers,
             json=payload,
             timeout=timeout,
         ) as resp:
-    
             if resp.status != 200:
-            
                 text = await resp.text()
-            
                 raise AnwbApiError(
                     f"ORS route error {resp.status}: {text}"
                 )
-    
+
             result = await resp.json()
-    
+
         feature = result["features"][0]
-    
+
         summary = (
             feature["properties"]
             ["summary"]
         )
-    
+
         return {
             "distance_km":
                 round(
@@ -359,95 +343,66 @@ class AnwbClient:
                 ),
             "geometry":
                 feature["geometry"],
-        }    
-    
+        }
+
     def get_marker_on_route(
         self,
         route_geometry: dict,
         distance_km: float,
-    ) -> dict:
-        """Return point on route."""
-    
-        coords = (
-            route_geometry["coordinates"]
-        )
-    
-        target_meters = (
-            distance_km * 1000
-        )
-    
-        travelled = 0
-    
-        for i in range(
-            len(coords) - 1
-        ):
-    
+    ) -> dict | None:
+        """Return point at a distance along the route."""
+        coords = route_geometry.get("coordinates", [])
+        if not coords:
+            return None
+
+        target_meters = max(0.0, distance_km * 1000)
+        travelled = 0.0
+
+        for i in range(len(coords) - 1):
             lon1, lat1 = coords[i]
             lon2, lat2 = coords[i + 1]
-    
-            dx = lon2 - lon1
-            dy = lat2 - lat1
-    
-            segment_length = (
-                math.sqrt(
-                    dx * dx +
-                    dy * dy
-                )
-                * 111000
+
+            lat1_rad = math.radians(lat1)
+            lat2_rad = math.radians(lat2)
+            dlat = lat2_rad - lat1_rad
+            dlon = math.radians(lon2 - lon1)
+
+            a = (
+                math.sin(dlat / 2) ** 2
+                + math.cos(lat1_rad)
+                * math.cos(lat2_rad)
+                * math.sin(dlon / 2) ** 2
             )
-    
-            if (
-                travelled
-                + segment_length
-                >= target_meters
-            ):
-    
-                remaining = (
-                    target_meters
-                    - travelled
-                )
-    
-                ratio = (
-                    remaining
-                    / segment_length
-                )
-    
-                marker_lon = (
-                    lon1 +
-                    (
-                        (lon2 - lon1)
-                        * ratio
+            segment_meters = (
+                2
+                * 6_371_000
+                * math.asin(math.sqrt(min(1.0, a)))
+            )
+
+            if travelled + segment_meters >= target_meters:
+                if segment_meters == 0:
+                    ratio = 0.0
+                else:
+                    ratio = (
+                        (target_meters - travelled)
+                        / segment_meters
                     )
-                )
-    
-                marker_lat = (
-                    lat1 +
-                    (
-                        (lat2 - lat1)
-                        * ratio
-                    )
-                )
-    
+
                 return {
-                    "latitude": marker_lat,
-                    "longitude": marker_lon,
-                    "distance_from_start":
-                        distance_km,
+                    "latitude": lat1 + (lat2 - lat1) * ratio,
+                    "longitude": lon1 + (lon2 - lon1) * ratio,
+                    "distance_from_start": distance_km,
                 }
-    
-            travelled += segment_length
-    
-        last_lon, last_lat = (
-            coords[-1]
-        )
-    
+
+            travelled += segment_meters
+
+        last_lon, last_lat = coords[-1]
         return {
             "latitude": last_lat,
             "longitude": last_lon,
-            "distance_from_start":
-                distance_km,
-        }    
-        
+            "distance_from_start": distance_km,
+        }
+
     async def get_chargers_for_destination(
         self,
         lat: float,
