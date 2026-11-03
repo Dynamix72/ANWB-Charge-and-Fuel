@@ -65,8 +65,10 @@ def _normalize_fuel_type(value):
     if (text.startswith("diesel") or text.startswith("b7") or
             text.startswith("b10") or "diesel" in text):
         return "diesel"
+    if text.startswith("cng") or "cng" in text:
+        return "cng"
     if (text.startswith("lpg") or text.startswith("autogas") or
-            text.startswith("cng") or "autogas" in text or "cng" in text):
+            "autogas" in text):
         return "lpg"
     return text
 
@@ -221,6 +223,10 @@ def _extract_fuel_station_details(item, selected_fuel_type):
     if candidate_price is None:
         for field in ("price", "fuelPrices", "prices"):
             value = item.get(field)
+            if isinstance(value, list):
+                # List entries need a fuel type match; never treat the list as
+                # an untyped price fallback.
+                continue
             if isinstance(value, dict):
                 for key, subvalue in value.items():
                     key_type = _normalize_fuel_type(key)
@@ -397,8 +403,8 @@ class RouteCoordinator(DataUpdateCoordinator):
                         continue
                     distance_km = _haversine_km(lat, lon, plat, plon)
                     fuel_type, price = _extract_fuel_station_details(item, self.fuel_type)
-                    # Skip zero-priced fuel stations before sorting and top-10 sensors are populated.
-                    if price == 0:
+                    # Exclude stations without a price for the selected fuel.
+                    if price is None or price == 0:
                         continue
                     result["fuel_stations"].append({
                         "station": item,
